@@ -13,3 +13,97 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+
+// Added an enum for attendance status for data consistency
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+model Organisation {
+  id       String  @id @default(uuid())
+  // Added an explicit orgId for login, which should be unique
+  orgId    String  @unique
+  name     String
+  password String
+  classes  Class[]
+}
+
+model Class {
+  id         String   @id @default(uuid())
+  name       String
+  // Added the required IP address field for the class network
+  ipAddress  String?
+
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  organisationId String
+  // A class can have many subjects, and a subject can be in many classes (Many-to-Many)
+  subjects       Subject[]
+  // A class can have many students (One-to-Many)
+  students       Student[]
+  // A class can have many teachers, and a teacher can be in many classes (Many-to-Many)
+  teachers       Teacher[]
+  // A class will have many attendance records
+  attendances    Attendance[]
+}
+
+model Teacher {
+  id        String  @id @default(uuid())
+  // Added an explicit teacherId for login, which should be unique
+  teacherId String  @unique
+  name      String
+  password  String
+  // A teacher can be assigned to many classes
+  classes   Class[]
+  // A teacher can teach many subjects
+  subjects  Subject[]
+}
+
+model Subject {
+  id       String    @id @default(uuid())
+  name     String
+  // A subject can be taught in many classes
+  classes  Class[]
+  // A subject can be taught by many teachers
+  teachers Teacher[]
+  // Added the missing back-relation to complete the one-to-many relationship
+  attendances Attendance[]
+}
+
+model Student {
+  id        String  @id @default(uuid())
+  // Added rollNo, which should be unique per organisation
+  rollNo    String  @unique
+  name      String
+  password  String
+  // Added a field to store the link to the facial data (e.g., from Cloudinary)
+  faceDataUrl String?
+
+  // A student belongs to one class
+  class     Class      @relation(fields: [classId], references: [id])
+  classId   String
+  // A student can have many attendance records
+  attendances Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  // Added a timestamp to know WHEN attendance was taken
+  createdAt DateTime @default(now())
+  // Added status to mark if the student was present or absent
+  status    AttendanceStatus
+
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+
+  class     Class   @relation(fields: [classId], references: [id])
+  classId   String
+}
+
