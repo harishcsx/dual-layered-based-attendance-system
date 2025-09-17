@@ -1,37 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../../components/common/Card.jsx';
-import Button from '../../components/common/Button.jsx';
+import Card from '@/components/common/Card.jsx';
+import Button from '@/components/common/Button.jsx';
 import { Camera, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 
 const FaceRegistration = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Instructions, 2: Camera, 3: Confirm, 4: Loading, 5: Done
+    const [step, setStep] = useState(1);
     const [capturedImage, setCapturedImage] = useState(null);
+    const [stream, setStream] = useState(null); // State to hold the camera stream
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
     const startCamera = async () => {
+        console.log("Step 1: Attempting to get camera stream...");
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-            setStep(2);
+            const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            console.log("Step 2: Stream obtained successfully.");
+            setStream(cameraStream); // Store the stream in state
+            setStep(2); // Move to the camera view
         } catch (err) {
-            console.error("Error accessing camera:", err);
-            alert("Could not access camera. Please check permissions and try again.");
+            console.error("CRITICAL ERROR accessing camera:", err.name, err.message);
+            alert(`Could not access camera. Error: ${err.name}.`);
         }
     };
 
     const stopCamera = () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject;
-            const tracks = stream.getTracks();
-            tracks.forEach(track => track.stop());
-            videoRef.current.srcObject = null;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            console.log("Camera stream stopped.");
+            setStream(null);
         }
     };
+
+    // FIX: Use useEffect to attach the stream only after the video element is rendered.
+    useEffect(() => {
+        if (step === 2 && stream && videoRef.current) {
+            console.log("Step 3: Attaching stream to video element.");
+            videoRef.current.srcObject = stream;
+        }
+    }, [step, stream]);
+
 
     const handleCapture = () => {
         if (videoRef.current && canvasRef.current) {
@@ -47,21 +56,30 @@ const FaceRegistration = () => {
             setStep(3);
         }
     };
+    
+    const handleCanPlay = async () => {
+        console.log("Step 4: Video metadata loaded. Attempting to play...");
+        if (videoRef.current) {
+            try {
+                await videoRef.current.play();
+                console.log("Step 5: Video playback started successfully!");
+            } catch (e) {
+                console.error("CRITICAL ERROR: Failed to play video.", e);
+            }
+        }
+    };
 
     const handleConfirm = async () => {
-        setStep(4); // Show loading spinner
-        // --- API CALL SIMULATION ---
-        // In a real app, you would convert the dataUrl to a Blob/File
-        // and send it to your backend API for processing and storage.
+        setStep(4);
         console.log("Uploading image for processing...");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
         console.log("Processing complete!");
-        // --- END SIMULATION ---
         setStep(5);
     };
 
+
     useEffect(() => {
-        // Cleanup function to stop camera if component unmounts
+        // Cleanup function to ensure camera stops if we navigate away
         return () => stopCamera();
     }, []);
 
@@ -69,7 +87,7 @@ const FaceRegistration = () => {
         switch (step) {
             case 1:
                 return (
-                    <div className="text-center">
+                     <div className="text-center">
                         <Camera className="w-16 h-16 mx-auto text-blue-500 mb-4" />
                         <h2 className="text-2xl font-bold mb-2">Face Registration</h2>
                         <p className="text-gray-600 mb-6">This is a one-time setup. Please ensure you are in a well-lit area and look directly into the camera.</p>
@@ -81,7 +99,14 @@ const FaceRegistration = () => {
                     <div>
                         <h3 className="text-xl font-semibold text-center mb-4">Position Your Face in the Frame</h3>
                         <div className="bg-black rounded-lg overflow-hidden aspect-video">
-                            <video ref={videoRef} autoPlay playsInline className="w-full h-full"></video>
+                            <video 
+                                ref={videoRef} 
+                                onLoadedMetadata={handleCanPlay}
+                                autoPlay 
+                                playsInline 
+                                muted 
+                                className="w-full h-full"
+                            ></video>
                         </div>
                         <canvas ref={canvasRef} className="hidden"></canvas>
                         <div className="mt-6">
@@ -90,12 +115,12 @@ const FaceRegistration = () => {
                     </div>
                 );
             case 3:
-                return (
+                 return (
                     <div className="text-center">
                         <h3 className="text-xl font-semibold mb-4">Confirm Your Image</h3>
                         <img src={capturedImage} alt="Captured face" className="rounded-lg mb-6 mx-auto" />
                         <div className="flex justify-center space-x-4">
-                            <Button onClick={() => setStep(1)} variant="secondary">Retake</Button>
+                            <Button onClick={startCamera} variant="secondary">Retake</Button>
                             <Button onClick={handleConfirm}>Confirm & Upload</Button>
                         </div>
                     </div>
@@ -109,19 +134,18 @@ const FaceRegistration = () => {
                 );
             case 5:
                 return (
-                    <div className="text-center py-12">
+                     <div className="text-center py-12">
                         <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
                         <h2 className="text-2xl font-bold mb-2">Registration Complete!</h2>
                         <p className="text-gray-600 mb-6">You can now use facial recognition to mark your attendance.</p>
-                        <Button onClick={() => navigate('/student/dashboard')}>Back to Dashboard</Button>
+                        <Button onClick={() => navigate('/student-dashboard')}>Back to Dashboard</Button>
                     </div>
                 );
             default:
                 return null;
         }
     };
-
-    return (
+     return (
         <div className="max-w-2xl mx-auto">
             <Card>
                 {renderContent()}
