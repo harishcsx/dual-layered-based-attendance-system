@@ -1,70 +1,63 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Import Pages
-import LandingPage from './pages/LandingPage';
-import AuthPage from './pages/AuthPage';
-import StudentDashboard from './pages/student/StudentDashboard';
-import AttendanceFlow from './pages/student/AttendanceFlow';
-import StudentReport from './pages/student/StudentReport';
-import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import ClassManagementPage from './pages/teacher/ClassManagementPage';
-import OrganizationDashboard from './pages/organization/OrganizationDashboard';
-import ClassForm from './pages/organization/ClassForm';
+// Page Imports
+import LandingPage from './pages/LandingPage.jsx';
+import AuthPage from './pages/AuthPage.jsx';
+import StudentDashboard from './pages/student/StudentDashboard.jsx';
+import AttendanceFlow from './pages/student/AttendanceFlow.jsx';
+import StudentReport from './pages/student/StudentReport.jsx';
+import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
+import ClassManagementPage from './pages/teacher/ClassManagementPage.jsx';
+import OrganizationDashboard from './pages/organization/OrganizationDashboard.jsx';
+import ClassForm from './pages/organization/ClassForm.jsx';
+import AnalysisPage from './pages/common/AnalysisPage.jsx';
+import FaceRegistration from './pages/student/FaceRegistration.jsx';
 
-// Import Common Components
-import Layout from './components/common/Layout';
+// Common Component Imports
+import Layout from './components/common/Layout.jsx';
 
 function App() {
-    const [userRole, setUserRole] = useState(null);
+    // In a real app, this would come from a context or auth service
     const [loggedInUser, setLoggedInUser] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
-    // This component acts as a wrapper for all protected routes
-    const LayoutWrapper = () => {
-        const navigate = useNavigate();
-
-        const handleLogout = () => {
-            setLoggedInUser(null);
-            setUserRole(null);
-            navigate('/'); // Redirect to landing page on logout
-        };
-
-        // If a user is not logged in, redirect them to the authentication page
-        if (!loggedInUser) {
-            return <Navigate to="/auth" />;
-        }
-
-        // If logged in, render the main layout which includes a header and a space for the page content
-        return (
-            <Layout loggedInUser={loggedInUser} handleLogout={handleLogout}>
-                <Outlet /> {/* Renders the active nested route's component */}
-            </Layout>
-        );
+    const handleLogout = () => {
+        setLoggedInUser(null);
+        setUserRole(null);
     };
 
     return (
-        <BrowserRouter>
-            <Routes>
-                {/* Public routes that are accessible without logging in */}
-                <Route path="/" element={loggedInUser ? <Navigate to={`/${userRole}-dashboard`} /> : <LandingPage />} />
+        <Router>
+            <Layout loggedInUser={loggedInUser} handleLogout={handleLogout}>
+                <Routes>
+                    {/* Public Routes */}
+                                   <Route path="/" element={loggedInUser ? <Navigate to={`/${userRole}-dashboard`} /> : <LandingPage />} />
                 <Route path="/auth" element={loggedInUser ? <Navigate to={`/${userRole}-dashboard`} /> : <AuthPage setUserRole={setUserRole} setLoggedInUser={setLoggedInUser} />} />
 
-                {/* Protected routes that require a user to be logged in */}
-                {/* These routes are wrapped by the LayoutWrapper */}
-                <Route element={<LayoutWrapper />}>
+
+                    {/* Student Routes */}
                     <Route path="/student-dashboard" element={<StudentDashboard />} />
                     <Route path="/attendance-flow" element={<AttendanceFlow />} />
-                    <Route path="/student-report" element={<StudentReport />} />
+                    <Route path="/student/report" element={<StudentReport />} />
+                    <Route path="/student/register-face" element={<FaceRegistration />} />
+
+                    {/* Teacher Routes */}
                     <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
                     <Route path="/class-management" element={<ClassManagementPage />} />
-                    <Route path="/organization-dashboard" element={<OrganizationDashboard />} />
-                    <Route path="/class-form" element={<ClassForm />} />
-                </Route>
 
-                {/* A fallback route to redirect any unknown paths to the landing page */}
-                <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-        </BrowserRouter>
+                    {/* Organization Routes */}
+                    <Route path="/organization-dashboard" element={<OrganizationDashboard />} />
+                    <Route path="/organization/class-form" element={<ClassForm />} />
+                    
+                    {/* Common Routes for Teacher/Org */}
+                    <Route path="/analysis" element={<AnalysisPage />} />
+
+                    {/* Redirect any unknown paths */}
+                    <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+            </Layout>
+        </Router>
     );
 }
 
