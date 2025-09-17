@@ -9,3 +9,4 @@ const VerificationSpinner = ({ text }) => (
 
 export default VerificationSpinner;
 
+ 
