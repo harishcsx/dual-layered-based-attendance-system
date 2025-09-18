@@ -39,7 +39,7 @@ function App() {
                     {/* Student Routes */}
                     <Route path="/student-dashboard" element={<StudentDashboard />} />
                     <Route path="/attendance-flow" element={<AttendanceFlow />} />
-                    <Route path="/student/report" element={<StudentReport />} />
+                    <Route path="/student-report" element={<StudentReport />} />
                     <Route path="/student/register-face" element={<FaceRegistration />} />
 
                     {/* Teacher Routes */}

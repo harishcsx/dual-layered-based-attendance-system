@@ -7,7 +7,7 @@ import { Calendar, BarChart2, ScanFace } from 'lucide-react'; // Added ScanFace 
 const StudentDashboard = () => {
     const navigate = useNavigate();
     // In a real app, this would be from logged in user context
-    const studentName = "John Doe";
+    const studentName = "Puppala Harish";
 
     return (
         <div>
@@ -23,7 +23,7 @@ const StudentDashboard = () => {
                         </div>
                         <p className="text-gray-600 mb-4">Proceed to the verification process to mark yourself present for today's class.</p>
                     </div>
-                    <Button onClick={() => navigate('/student/attendance')}>Proceed to Verification</Button>
+                    <Button onClick={() => navigate('/attendance-flow')}>Proceed to Verification</Button>
                 </Card>
 
                 {/* (New) Face Registration Card */}
@@ -47,7 +47,7 @@ const StudentDashboard = () => {
                         </div>
                         <p className="text-gray-600 mb-4">Check your overall attendance percentage and detailed subject-wise reports.</p>
                     </div>
-                    <Button onClick={() => navigate('/student/report')} variant="secondary">View Report</Button>
+                    <Button onClick={() => navigate('/student-report')} variant="secondary">View Report</Button>
                 </Card>
 
             </div>
