@@ -1,7 +1,7 @@
 Flask
 python-dotenv
 opencv-python
-face_recognition
-numpy
-requests
+deepface
+tensorflow
 Pillow
+requests

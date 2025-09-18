@@ -1,12 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// File: backend/prisma/schema.prisma
+// -----------------------------------
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  // The "output" line has been removed to use the default location.
 }
 
 datasource db {
@@ -14,19 +11,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-
-// Added an enum for attendance status for data consistency
+// ... rest of your schema remains the same
 enum AttendanceStatus {
   PRESENT
   ABSENT
 }
 
+enum MarkedBy {
+  AUTOMATED
+  MANUAL_TEACHER
+}
+
 model Organisation {
   id       String  @id @default(uuid())
-  // Added an explicit orgId for login, which should be unique
   orgId    String  @unique
   name     String
   password String
@@ -34,76 +31,56 @@ model Organisation {
 }
 
 model Class {
-  id         String   @id @default(uuid())
-  name       String
-  // Added the required IP address field for the class network
-  ipAddress  String?
-
+  id             String       @id @default(uuid())
+  name           String
+  ipAddress      String?
   organisation   Organisation @relation(fields: [organisationId], references: [id])
   organisationId String
-  // A class can have many subjects, and a subject can be in many classes (Many-to-Many)
   subjects       Subject[]
-  // A class can have many students (One-to-Many)
   students       Student[]
-  // A class can have many teachers, and a teacher can be in many classes (Many-to-Many)
   teachers       Teacher[]
-  // A class will have many attendance records
   attendances    Attendance[]
 }
 
 model Teacher {
-  id        String  @id @default(uuid())
-  // Added an explicit teacherId for login, which should be unique
-  teacherId String  @unique
+  id        String    @id @default(uuid())
+  teacherId String    @unique
   name      String
   password  String
-  // A teacher can be assigned to many classes
   classes   Class[]
-  // A teacher can teach many subjects
   subjects  Subject[]
 }
 
 model Subject {
-  id       String    @id @default(uuid())
-  name     String
-  // A subject can be taught in many classes
-  classes  Class[]
-  // A subject can be taught by many teachers
-  teachers Teacher[]
-  // Added the missing back-relation to complete the one-to-many relationship
+  id          String       @id @default(uuid())
+  name        String
+  classes     Class[]
+  teachers    Teacher[]
   attendances Attendance[]
 }
 
 model Student {
-  id        String  @id @default(uuid())
-  // Added rollNo, which should be unique per organisation
-  rollNo    String  @unique
-  name      String
-  password  String
-  // Added a field to store the link to the facial data (e.g., from Cloudinary)
-  faceDataUrl String?
-
-  // A student belongs to one class
-  class     Class      @relation(fields: [classId], references: [id])
-  classId   String
-  // A student can have many attendance records
-  attendances Attendance[]
+  id               String       @id @default(uuid())
+  rollNo           String       @unique
+  name             String
+  password         String
+  profileImageUrl  String? // URL from Cloudinary for the profile picture
+  faceEncoding     String? // The 128-d encoding string from the Python service
+  class            Class        @relation(fields: [classId], references: [id])
+  classId          String
+  attendances      Attendance[]
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
-  // Added a timestamp to know WHEN attendance was taken
-  createdAt DateTime @default(now())
-  // Added status to mark if the student was present or absent
+  id        String           @id @default(uuid())
+  createdAt DateTime         @default(now())
   status    AttendanceStatus
-
-  student   Student @relation(fields: [studentId], references: [id])
+  markedBy  MarkedBy         @default(AUTOMATED)
+  student   Student          @relation(fields: [studentId], references: [id])
   studentId String
-
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subject   Subject          @relation(fields: [subjectId], references: [id])
   subjectId String
-
-  class     Class   @relation(fields: [classId], references: [id])
+  class     Class            @relation(fields: [classId], references: [id])
   classId   String
 }
 
